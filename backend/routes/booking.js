@@ -5,7 +5,12 @@ const authMiddleware = require("../middleware/auth")
 const razorpay = require("../config/razorpay");
 const crypto = require('crypto');
 const Room = require("../models/Room")
-const Booking = require("../models/Booking")
+const Booking = require("../models/Booking");
+const orderCreationRateLimit = require("../middleware/ordreCreationRateLimit");
+const authMidlleware = require("../middleware/auth");
+const ownerMiddleware = require("../middleware/lodgeOwner");
+const DeactivateRequest = require("../models/deactivateRequest");
+const lodge = require("../models/lodge");
 
 router.post("/booking/:roomId", authMiddleware, async (req, res) => {
   try {
@@ -103,7 +108,7 @@ router.post("/booking/:roomId", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/booking/:bookingId/payment", authMiddleware, async (req, res) => {
+router.post("/booking/:bookingId/payment", authMiddleware, orderCreationRateLimit, async (req, res) => {
   try {
     const { bookingId } = req.params
 
@@ -232,6 +237,59 @@ router.post("/booking/:bookingId/verify-payment", authMiddleware, async (req, re
   }
   
 
+});
+
+router.post("/request-deactivate/:lodgeId", authMidlleware, ownerMiddleware, async (req, res) => {
+
+  try {
+    const { lodgeId } = req.params;
+  const ownerId = req.user.userId;
+
+  const property = await lodge.findOne({_id: lodgeId, owner: ownerId});
+  if(!property) {
+    return res.status(404).json({
+      success: false,
+      message: "Property not found and you are not owner of this property"
+    })
+  }
+  if(property.status !== "approved") {
+    return res.status(400).json({
+      success: false,
+      message: "Property not approved"
+    })
+  }
+  const existingRequest = await DeactivateRequest.findOne({
+    lodge: lodgeId,
+    owner: ownerId,
+    status: "pending"
+  });
+  if(existingRequest) {
+    return res.status(400).json({
+      success: false,
+      message: "Already requsted"
+    })
+  }
+  
+  const request = new DeactivateRequest({
+    lodge: lodgeId,
+    owner: ownerId,
+    reason: req.body.reason || ""
+  });
+  await request.save();
+  return res.status(201).json({
+    success:true,
+    message: "Deactivation request sent to admin",
+    request
+  })
+  } catch (error) {
+    console.error("Deactivate Request Error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send deactivation request"
+      });
+  }
+  
 })
 
 module.exports = router

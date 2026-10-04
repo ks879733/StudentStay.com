@@ -5,6 +5,8 @@ const Lodge = require("../models/lodge");
 const User = require("../models/User")
 const adminMiddleware = require("../middleware/admin");
 const { default: mongoose } = require("mongoose");
+const DeactivateRequest = require("../models/deactivateRequest");
+const Room = require("../models/Room");
 router.get("/pending-lodge", authMidlleware, adminMiddleware, async (req, res) => {
   try {
     const page = parseInt(req.query.page || 1);
@@ -129,4 +131,108 @@ router.get("/all-users",authMidlleware,adminMiddleware,async (req, res) => {
     }
   }
 );
-module.exports = router
+
+router.get("/pending-deactivation-requests", authMidlleware, adminMiddleware, async (req, res) => {
+  try {
+    const requests = await DeactivateRequest.find({ status: "pending" })
+      .populate("owner", "name email phone")
+      .populate("lodge", "name type address owner status")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: requests.length,
+      requests,
+    });
+  } catch (error) {
+    console.error("Get pending deactivation requests error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch pending deactivation requests",
+    });
+  }
+});
+
+router.patch("/approve-deactivation/:requestId", authMidlleware, adminMiddleware, async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const request = await DeactivateRequest.findOne({_id: requestId, status: "pending"});
+    if(!request) {
+      return res.status(400).json({
+        succes: false,
+        message: "Wait for for admin approval"
+      })
+    }
+    const property = await Lodge.findById(request.lodge);
+    if(!property) {
+      return res.status(404).json({
+        success: false,
+        message: "Property not found"
+      })
+    }
+    property.status = "inactive";
+    await property.save();
+    await Room.updateMany(
+      {
+        lodge: property._id
+      },
+      {
+        $set: { status: "inactive" }
+      }
+    );
+    request.status = "approved"
+    await request.save();
+    return res.status(200).json({
+        success: true,
+        message: "Lodge deactivated successfully"
+      }); 
+  } catch (error) {
+    console.error("Approve Deactivation Error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to approve deactivation"
+      });
+  }
+});
+
+
+router.patch(
+  "/reject-deactivation/:requestId",
+  authMidlleware,
+  adminMiddleware,
+  async (req, res) => {
+    try {
+      const request = await DeactivateRequest.findOne({
+        _id: req.params.requestId,
+        status: "pending"
+      });
+
+      if (!request) {
+        return res.status(404).json({
+          success: false,
+          message: "Request not found or already processed"
+        });
+      }
+
+      request.status = "rejected";
+      await request.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Deactivation request rejected"
+      });
+
+    } catch (error) {
+      console.error("Reject Deactivation Error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to reject request"
+      });
+    }
+  }
+);
+
+module.exports = router;

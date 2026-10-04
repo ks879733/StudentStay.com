@@ -5,7 +5,7 @@ const lodge = require("../models/lodge");
 const propertyUpload = require("../middleware/propertyUpload.");
 const cloudinary = require("../config/cloudinory");
 const Room = require("../models/Room");
-
+const Booking = require("../models/Booking")
 const router = express.Router();
 
 const parseJsonField = (value, fieldName, fallback) => {
@@ -610,8 +610,9 @@ router.get(
     }
   }
 );
+
 //
-router.get("/owner/bookings", authMidlleware, ownerMiddleware, async (req, res) => {
+router.get("/bookings", authMidlleware, ownerMiddleware, async (req, res) => {
   try {
     const ownerId = req.user.userId;
 
@@ -624,7 +625,7 @@ router.get("/owner/bookings", authMidlleware, ownerMiddleware, async (req, res) 
       .populate({
         path: "lodge",
         match: { owner: ownerId },
-        select: "name owner"
+        select: "name owner address"
       })
       .sort({ createdAt: -1 });
 
@@ -647,6 +648,8 @@ router.get("/owner/bookings", authMidlleware, ownerMiddleware, async (req, res) 
     });
   }
 });
+
+
 // Avi Delete room API baaki hai
 // Edit Room details API
 

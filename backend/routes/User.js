@@ -2,12 +2,26 @@ const express = require("express")
 const User = require("../models/User");
 const router = express.Router()
 const jwt = require("jsonwebtoken");
+const Joi = require("joi");
 const bcrypt = require("bcryptjs")
 const lodge = require("../models/lodge");
 const Room = require("../models/Room");
 const authMidlleware = require("../middleware/auth");
 const Booking = require("../models/Booking");
-router.post("/register", async (req, res) => {
+const loginLimiter = require("../middleware/rateLimit");
+const registerLimiter = require("../middleware/registerRateLimit");
+const {otpLimiter, resendOtpLimit} = require("../middleware/otpLimiter")
+const generateOTP = require("../utils/generateOtp")
+const { redisClient } = require("../config/redis");
+const sendOTPEmail = require("../utils/sendEmail")
+
+
+const schema = Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().min(6).required()
+});
+
+router.post("/register",registerLimiter, async (req, res) => {
 
   try {
     const { name, email, phone, password } = req.body;
@@ -46,7 +60,8 @@ router.post("/register", async (req, res) => {
     
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
     newUser.refreshToken = hashedRefreshToken
-  
+
+   
     await newUser.save();
 
     res.cookie("refreshToken", refreshToken, {
@@ -62,7 +77,8 @@ router.post("/register", async (req, res) => {
         name: newUser.name,
         email: newUser.email,
         phone: newUser.phone,
-        role: newUser.role
+        role: newUser.role,
+        isVerified: newUser.isVerified
       }
     })
     
@@ -76,33 +92,104 @@ router.post("/register", async (req, res) => {
   }
 });
 
-router.post("/login", async (req, res) => {
+router.post("/login",loginLimiter, async (req, res) => {
 
   try {
-    const { email, password } = req.body;
+    
+    const { error, value } = schema.validate(req.body);
 
-  if(!email || !password) {
-    return res.status(400).json({
-      success: false,
-      message: "Please enter email and password"
-    });
-  }
-  const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (error) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid input"
+        });
+    }
+    const { email, password } = value;
+  
+  
+  const user = await User.findOne({ email});
   if(!user) {
     return res.status(404).json({
       success: false,
-      message: "User not found"
+      message: "Invalid email or password"
     })
   }
   const isValidPassword = await bcrypt.compare(password, user.password);
-  if(!user || !isValidPassword) {
+  if(!isValidPassword) {
     return res.status(404).json({
       success: false,
       message: "Invalid credential"
     });
   }
 
-  const accessToken = jwt.sign( {
+   const otp = generateOTP();
+
+    await redisClient.set(
+      `LoginOtp${user._id}`, otp,
+      {
+        EX: 120,
+      } 
+    )
+
+    await redisClient.set(
+      `ResendLoginOtp${user._id}`, "1",
+      {
+        EX: 60,
+      } 
+    )
+    await sendOTPEmail(user.email, otp);
+  
+
+  return res.status(200).json({
+    success: true,
+    otpRequired: true,
+    message: "OTP sent successfully",
+    userId: user._id
+  });
+  } catch (error) {
+    console.error("Login Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Login failed",
+    });
+  }
+ });
+
+ router.post("/verify-login-otp", otpLimiter, async (req, res) => {
+  try {
+    const { userId, otp } = req.body;
+    if(!userId || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter UserId and OTP "
+      })
+    }
+    const user = await User.findById(userId)
+    if(!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      })
+    }
+    const storedOtp = await redisClient.get(`LoginOtp${userId}`);
+
+    if(!storedOtp) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter otp"
+      })
+    }
+    if(storedOtp !== otp.toString()){
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP"
+      })
+    }
+    await redisClient.del(`LoginOtp${userId}`);
+    await redisClient.del(`ResendLoginOtp${userId}`);
+
+    const accessToken = jwt.sign( {
     userId: user._id,
     role: user.role
   },
@@ -126,31 +213,105 @@ router.post("/login", async (req, res) => {
     sameSite: "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
-
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
-    message: "Login Successfully",
-    accessToken,
-
-    user: {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      role: user.role
-    }
-  });
+      message: "Login successful",
+      accessToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role
+      }
+  })
   } catch (error) {
-    console.error("Login Error:", error);
+    console.error("Verify OTP error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Login failed",
+      message: "Internal server error"
     });
   }
   
 
- });
+ })
+
+ router.post("/resend-login-otp", otpLimiter, async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required"
+      });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // Check cooldown
+    const cooldown = await redisClient.get(
+      `ResendLoginOtp${userId}`
+    );
+
+    if (cooldown) {
+      const ttl = await redisClient.ttl(
+        `ResendLoginOtp${userId}`
+      );
+
+      return res.status(429).json({
+        success: false,
+        message: `Please wait ${ttl} seconds before requesting another OTP`,
+        retryAfter: ttl
+      });
+    }
+
+    // Generate new OTP
+    const otp = generateOTP();
+
+    // Store new OTP
+    await redisClient.set(
+      `LoginOtp${userId}`,
+      otp,
+      {
+        EX: 120
+      }
+    );
+
+    // Start new cooldown
+    await redisClient.set(
+      `ResendLoginOtp${userId}`,
+      "1",
+      {
+        EX: 60
+      }
+    );
+
+    // Send email
+    await sendOTPEmail(user.email, otp);
+
+    return res.status(200).json({
+      success: true,
+      message: "New OTP sent successfully"
+    });
+
+  } catch (error) {
+    console.error("Resend OTP Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to resend OTP"
+    });
+  }
+});
 
  router.post("/refresh", async (req, res) => {
   const userRefreshToken = req.cookies.refreshToken;
@@ -277,7 +438,7 @@ router.get("/all-properties", async (req, res) => {
 
     const properties = await lodge.find({
       status: "approved"
-    }).sort({ createdAt: -1 })
+    }).select("-description").sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
