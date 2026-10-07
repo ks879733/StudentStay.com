@@ -152,7 +152,7 @@ const OwnerProperty = () => {
                     key={property._id}
                     className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"
                   >
-                    <div className="grid md:grid-cols-[260px_minmax(0,1fr)]">
+                    <div className="grid min-w-0 md:grid-cols-[260px_minmax(0,1fr)]">
                       <div className="h-full min-h-[200px] bg-slate-100">
                         {imageUrl ? (
                           <img
@@ -170,13 +170,13 @@ const OwnerProperty = () => {
                         )}
                       </div>
 
-                      <div className="p-5 sm:p-6">
+                      <div className="min-w-0 p-4 sm:p-6">
                         <div className="flex flex-wrap items-start justify-between gap-4">
-                          <div>
+                          <div className="min-w-0">
                             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
                               {property.type || "Accommodation"}
                             </p>
-                            <h3 className="mt-2 text-xl font-semibold text-slate-900">
+                            <h3 className="mt-2 break-words text-xl font-semibold text-slate-900">
                               {property.name}
                             </h3>
                           </div>
@@ -195,7 +195,7 @@ const OwnerProperty = () => {
                         </div>
 
                         {locationText && (
-                          <p className="mt-4 flex items-start gap-2 text-sm text-slate-600">
+                          <p className="mt-4 flex min-w-0 items-start gap-2 break-words text-sm text-slate-600">
                             <MapPin
                               className="mt-0.5 h-4 w-4 shrink-0 text-blue-600"
                               aria-hidden="true"

@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+button:not(:disabled) {
+  cursor: pointer;
+}
+
 @theme {
   --font-sans: "Poppins", sans-serif;
 }
@@ -8,4 +12,159 @@ html,
 body,
 #root {
   font-family: "Poppins", sans-serif;
+}
+
+/* Shared warm ivory and soft-gold theme for the full application. */
+body,
+.bg-white,
+[class~="bg-white/90"],
+[class~="bg-white/80"] {
+  background-color: #fffdf8;
+}
+
+[class*="bg-slate-50"],
+[class*="bg-slate-100"] {
+  background-color: #f8f5ed;
+}
+
+[class~="bg-slate-200"] {
+  background-color: #eee7d8;
+}
+
+[class~="bg-slate-950"],
+[class~="bg-slate-900"],
+[class~="bg-slate-800"] {
+  background-color: #4c3b1c;
+}
+
+[class*="border-slate-100"],
+[class*="border-slate-200"] {
+  border-color: #e9e1d0;
+}
+
+[class~="border-slate-300"] {
+  border-color: #d8cdb5;
+}
+
+/* Gold replaces blue as the shared action and highlight color. */
+[class*="bg-blue-50"] { background-color: #fbf7e9; }
+[class*="bg-blue-100"] { background-color: #f5e9c7; }
+[class*="bg-blue-200"] { background-color: #eddda9; }
+[class*="bg-blue-300"] { background-color: #e1c982; }
+[class*="bg-blue-400"] { background-color: #dcc05f; }
+[class*="bg-blue-500"],
+[class*="bg-blue-600"],
+[class*="bg-blue-700"] { background-color: #D4AF37; }
+[class*="bg-blue-800"] { background-color: #a98720; }
+[class*="text-blue-50"],
+[class*="text-blue-100"] { color: #fff8e5; }
+[class*="text-blue-200"] { color: #f5e8c5; }
+[class*="text-blue-300"] { color: #e8d49f; }
+[class*="text-blue-400"] { color: #c7a955; }
+[class*="text-blue-500"],
+[class*="text-blue-600"] { color: #94701f; }
+[class*="text-blue-700"] { color: #795b1c; }
+[class*="text-blue-800"] { color: #614818; }
+[class*="border-blue-50"] { border-color: #fbf6e8; }
+[class*="border-blue-100"] { border-color: #f5e9c7; }
+[class*="border-blue-200"] { border-color: #eddda9; }
+[class*="border-blue-300"] { border-color: #e1c982; }
+[class*="border-blue-400"],
+[class*="border-blue-500"],
+[class*="border-blue-600"] { border-color: #D4AF37; }
+[class*="ring-blue-"] { --tw-ring-color: #dec77f; }
+[class*="outline-blue-"] { outline-color: #a77e28; }
+[class*="shadow-blue-"] { --tw-shadow-color: rgb(166 126 40 / 0.18); }
+
+[class*="bg-amber-50"] { background-color: #fbf7e9; }
+[class*="bg-amber-100"] { background-color: #f6edcf; }
+[class*="bg-amber-200"] { background-color: #eddda9; }
+[class*="bg-amber-300"] { background-color: #e5cc78; }
+[class*="bg-amber-400"] { background-color: #dcc05f; }
+[class*="bg-amber-500"],
+[class*="bg-amber-600"],
+[class*="bg-amber-700"] { background-color: #D4AF37; }
+[class*="bg-amber-800"] { background-color: #a98720; }
+[class*="bg-amber-900"] { background-color: #705819; }
+[class*="text-amber-500"],
+[class*="text-amber-600"] { color: #a98720; }
+[class*="text-amber-700"],
+[class*="text-amber-800"],
+[class*="text-amber-900"] { color: #806419; }
+[class*="border-amber-100"] { border-color: #f6edcf; }
+[class*="border-amber-200"] { border-color: #eddda9; }
+[class*="border-amber-300"] { border-color: #dfc56f; }
+[class*="border-amber-400"],
+[class*="border-amber-500"],
+[class*="border-amber-600"] { border-color: #D4AF37; }
+
+input[type="file"]::file-selector-button,
+input[type="file"]::-webkit-file-upload-button {
+  margin-right: 0.75rem;
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: #D4AF37;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+input[type="file"]:hover::file-selector-button,
+input[type="file"]:hover::-webkit-file-upload-button {
+  background: #bd9a2d;
+}
+
+/* Keep occasional sky and violet accents inside the same gold palette. */
+[class*="bg-sky-"],
+[class*="bg-violet-"] { background-color: #fbf6e8; }
+[class*="text-sky-"],
+[class*="text-violet-"] { color: #94701f; }
+[class*="border-sky-"],
+[class*="border-violet-"] { border-color: #eddda9; }
+
+/* Consistent warm, restrained elevation across cards, menus, and dialogs. */
+[class~="shadow-sm"] {
+  box-shadow: 0 1px 2px rgb(73 55 20 / 0.06), 0 3px 10px rgb(73 55 20 / 0.035);
+}
+[class~="shadow-md"] {
+  box-shadow: 0 4px 12px rgb(73 55 20 / 0.08), 0 1px 3px rgb(73 55 20 / 0.05);
+}
+[class~="shadow-lg"] {
+  box-shadow: 0 10px 26px rgb(73 55 20 / 0.11), 0 3px 8px rgb(73 55 20 / 0.05);
+}
+[class~="shadow-xl"],
+[class~="shadow-2xl"] {
+  box-shadow: 0 18px 44px rgb(73 55 20 / 0.14), 0 5px 14px rgb(73 55 20 / 0.06);
+}
+[class~="hover:shadow-md"]:hover {
+  box-shadow: 0 6px 16px rgb(73 55 20 / 0.1), 0 2px 5px rgb(73 55 20 / 0.05);
+}
+[class~="hover:shadow-lg"]:hover {
+  box-shadow: 0 12px 28px rgb(73 55 20 / 0.13), 0 3px 8px rgb(73 55 20 / 0.06);
+}
+[class*="shadow-["] {
+  --tw-shadow-color: rgb(130 97 31 / 0.16);
+}
+
+@media (max-width: 639px) {
+  .text-xs { font-size: 0.6875rem; }
+  .text-sm { font-size: 0.8125rem; }
+  .text-base { font-size: 0.9375rem; }
+  .text-lg { font-size: 1rem; }
+  .text-xl { font-size: 1.125rem; }
+  .text-2xl { font-size: 1.375rem; }
+  .text-3xl { font-size: 1.625rem; }
+  .text-4xl { font-size: 2rem; }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not(
+      [type="submit"]
+    ):not([type="button"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }

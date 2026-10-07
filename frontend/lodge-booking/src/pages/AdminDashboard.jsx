@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
-  Bell,
   Building2,
   Check,
   Clock3,
   LayoutDashboard,
   LogOut,
   MapPin,
+  MessageSquareText,
   ShieldCheck,
   Sparkles,
   Users,
@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import api from "../api/api";
 import { clearAuth } from "../auth";
+import StudentStayMark from "../components/StudentStayMark";
+import NotificationBell from "../components/NotificationBell";
 
 const formatLabel = (value) =>
   value ? value.charAt(0).toUpperCase() + value.slice(1) : "Unknown";
@@ -23,6 +25,7 @@ const formatLabel = (value) =>
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [pendingLodges, setPendingLodges] = useState([]);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -33,7 +36,7 @@ const AdminDashboard = () => {
     totalUsers: 0,
   });
 
-  const loadAdminData = async () => {
+  const loadAdminData = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -45,18 +48,21 @@ const AdminDashboard = () => {
         return;
       }
 
-      const [pendingResponse, usersResponse, propertiesResponse] =
+      const [pendingResponse, usersResponse, propertiesResponse, pendingRequestsResponse] =
         await Promise.all([
           api.get("/admin/pending-lodge", { params: { page: 1, limit: 20 } }),
           api.get("/admin/all-users"),
           api.get("/user/all-properties", { params: { page: 1, limit: 50 } }),
+          api.get("/admin/pending-deactivation-requests"),
         ]);
 
       const lodges = pendingResponse.data.lodges || [];
       const allUsers = usersResponse.data.users || [];
       const allProperties = propertiesResponse.data.properties || [];
+      const pendingRequests = pendingRequestsResponse.data.requests || [];
 
       setPendingLodges(lodges);
+      setPendingRequestsCount(pendingRequests.length);
       setUsers(allUsers.slice(0, 6));
       setStats({
         totalProperties: allProperties.length,
@@ -83,11 +89,15 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
   useEffect(() => {
-    loadAdminData();
-  }, []);
+    const timer = window.setTimeout(() => {
+      loadAdminData();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [loadAdminData]);
 
   const handleApprove = async (lodgeId) => {
     try {
@@ -125,41 +135,65 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="flex min-h-screen flex-col overflow-x-hidden lg:flex-row">
-        <aside className="w-full border-b border-slate-200 bg-slate-950 text-white lg:min-h-screen lg:w-[18rem] lg:shrink-0 lg:border-b-0 lg:border-r">
+    <div className="min-h-screen bg-amber-50/50 text-slate-900">
+      <div className="flex min-h-screen min-w-0 flex-col lg:flex-row">
+        <aside className="w-full border-b border-amber-200 bg-amber-50 text-slate-900 lg:min-h-screen lg:w-[18rem] lg:shrink-0 lg:border-b-0 lg:border-r">
           <div className="flex items-center gap-3 px-5 py-6 lg:px-6">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/30">
-              <Building2 className="h-5 w-5" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-200 text-amber-900 shadow-lg shadow-amber-900/10">
+              <Building2 className="hidden h-5 w-5 lg:block" />
+              <StudentStayMark className="h-8 w-8 text-white lg:hidden" />
             </div>
             <div>
-              <p className="text-xl font-black tracking-tight text-blue-400">
+              <p className="hidden text-xl font-black tracking-tight text-amber-800 lg:block">
                 StudentStay
               </p>
-              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-slate-300">
+              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-slate-500">
                 Admin panel
               </p>
             </div>
           </div>
 
           <nav className="space-y-2 px-4 pb-6 lg:px-5">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-2">
+            <div className="rounded-2xl border border-amber-200 bg-white/70 p-2">
               <button
                 type="button"
-                className="flex w-full items-center gap-3 rounded-xl bg-blue-600/20 px-3 py-2.5 text-sm font-medium text-blue-100"
+                onClick={() => navigate("/admin/dashboard")}
+                className="flex w-full items-center gap-3 rounded-xl bg-amber-200 px-3 py-2.5 text-sm font-medium text-amber-950 cursor-pointer"
               >
                 <LayoutDashboard className="h-4 w-4" />
                 Dashboard
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/admin/feedback")}
+                className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-amber-100 cursor-pointer"
+              >
+                <MessageSquareText className="h-4 w-4" />
+                Users Feedback
+              </button>
+            </div>
+
+            <div className="rounded-2xl border border-amber-200 bg-white/70 p-2">
+              <button
+                type="button"
+                onClick={() => navigate("/admin/pending-requests")}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-amber-100 cursor-pointer"
+              >
+                <Clock3 className="h-4 w-4" />
+                <span>Pending Requests</span>
+                <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+                  {pendingRequestsCount}
+                </span>
               </button>
             </div>
           </nav>
         </aside>
 
-        <main className="min-w-0 flex-1 overflow-x-hidden">
+        <main className="min-w-0 flex-1">
           <header className="border-b border-slate-200 bg-white/90 px-4 py-4 backdrop-blur-sm sm:px-6 lg:px-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-600">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">
                   Overview
                 </p>
                 <h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
@@ -168,13 +202,7 @@ const AdminDashboard = () => {
               </div>
 
               <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-600 transition hover:border-blue-200 hover:text-blue-700"
-                  aria-label="Notifications"
-                >
-                  <Bell className="h-4 w-4" />
-                </button>
+                <NotificationBell />
 
                 <button
                   type="button"
@@ -195,17 +223,17 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            <div className="mb-6 rounded-[28px] border border-slate-200 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 p-5 text-white shadow-[0_18px_50px_-24px_rgba(37,99,235,0.9)] sm:p-7">
+            <div className="mb-6 rounded-[28px] border border-amber-200 bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-200 p-5 text-slate-900 shadow-[0_18px_50px_-24px_rgba(180,135,40,0.3)] sm:p-7">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-100">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-800">
                     Welcome back
                   </p>
                   <h2 className="mt-2 text-2xl font-bold sm:text-3xl">
                     Manage properties and student accounts.
                   </h2>
                 </div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-sm font-medium text-blue-50">
+                <div className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-white/70 px-3 py-2 text-sm font-medium text-amber-900">
                   <Sparkles className="h-4 w-4" />
                   Recently added review
                 </div>
@@ -218,7 +246,7 @@ const AdminDashboard = () => {
                   <p className="text-sm font-medium text-slate-500">
                     Total users
                   </p>
-                  <Users className="h-5 w-5 text-blue-600" />
+                  <Users className="h-5 w-5 text-amber-700" />
                 </div>
                 <p className="mt-5 text-3xl font-bold text-slate-900">
                   {stats.totalUsers}
@@ -266,14 +294,14 @@ const AdminDashboard = () => {
               <section className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
                       Approvals
                     </p>
                     <h3 className="mt-2 text-xl font-bold text-slate-900">
                       Pending lodges
                     </h3>
                   </div>
-                  <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                  <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
                     {pendingLodges.length} pending
                   </span>
                 </div>
@@ -321,7 +349,7 @@ const AdminDashboard = () => {
                                     {lodge.name}
                                   </h4>
                                   <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-slate-600">
-                                    <MapPin className="h-4 w-4 text-blue-600" />
+                                    <MapPin className="h-4 w-4 text-amber-700" />
                                     {lodge.address?.area || "Area not provided"}
                                     ,{" "}
                                     {lodge.address?.city || "City not provided"}
@@ -379,7 +407,7 @@ const AdminDashboard = () => {
 
               <section className="min-h-[460px] rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div className="mb-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
                     Recent users
                   </p>
                   <h3 className="mt-2 text-xl font-bold text-slate-900">
@@ -400,7 +428,7 @@ const AdminDashboard = () => {
                           className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-3"
                         >
                           <div className="flex min-w-0 items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-sm font-semibold text-blue-700">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-sm font-semibold text-amber-800">
                               {(user.name || "U").charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0">
@@ -425,7 +453,7 @@ const AdminDashboard = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/dashboard")}
-                  className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                  className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900 transition hover:border-amber-300 hover:bg-amber-100 hover:text-amber-950"
                 >
                   Open public dashboard
                   <ArrowRight className="h-4 w-4" />

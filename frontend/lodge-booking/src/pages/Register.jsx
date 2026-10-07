@@ -9,6 +9,7 @@ import {
   UserRound,
 } from "lucide-react";
 import api from "../api/api";
+import StudentStayMark from "../components/StudentStayMark";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -51,13 +52,14 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 px-4 py-10">
-      <div className="mx-auto flex max-w-6xl flex-col overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_28px_100px_-40px_rgba(37,99,235,0.35)] lg:flex-row">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-100 px-4 py-10">
+      <div className="mx-auto flex max-w-6xl flex-col overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_28px_100px_-40px_rgba(153,115,33,0.24)] lg:flex-row">
         <div className="flex flex-1 flex-col justify-center bg-slate-950 px-6 py-10 text-white sm:px-10 lg:px-12">
           <div className="mb-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-300">
+            <p className="hidden text-xs font-semibold uppercase tracking-[0.18em] text-blue-300 md:block">
               StudentStay
             </p>
+            <StudentStayMark className="h-6 w-6 text-blue-300 md:hidden" />
             <h1 className="mt-3 text-3xl font-bold sm:text-4xl">
               Create your student account
             </h1>
@@ -120,7 +122,7 @@ const Register = () => {
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Email
+                 <span>Please enter your valid email for OTP</span>
                 </label>
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-slate-400" />

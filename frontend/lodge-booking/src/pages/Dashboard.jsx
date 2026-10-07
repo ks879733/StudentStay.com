@@ -13,6 +13,8 @@ import {
   Users,
 } from "lucide-react";
 import api from "../api/api";
+import CompactBrandMark from "../components/StudentStayMark";
+import FeedbackForm from "../components/FeedbackForm";
 
 const PAGE_SIZE = 6;
 
@@ -24,25 +26,25 @@ const StudentStayMark = ({ className = "" }) => (
     xmlns="http://www.w3.org/2000/svg"
     aria-hidden="true"
   >
-    <rect x="8" y="10" width="48" height="44" rx="12" fill="#EFF6FF" />
+    <rect x="8" y="10" width="48" height="44" rx="12" fill="#FBF7E9" />
     <path
       d="M18 30.5L32 18L46 30.5V42C46 43.66 44.66 45 43 45H21C19.34 45 18 43.66 18 42V30.5Z"
-      fill="#2563EB"
+      fill="#D4AF37"
     />
     <path
       d="M26 31H38C39.66 31 41 32.34 41 34V45H23V34C23 32.34 24.34 31 26 31Z"
-      fill="#F8FAFC"
+      fill="#FFFDF8"
     />
     <path
       d="M29 45V35H35V45"
-      stroke="#2563EB"
+      stroke="#D4AF37"
       strokeWidth="2.2"
       strokeLinecap="round"
     />
-    <circle cx="44" cy="20" r="8" fill="#1D4ED8" />
+    <circle cx="44" cy="20" r="8" fill="#D4AF37" />
     <path
       d="M44 15V25M39 20H49"
-      stroke="#F8FAFC"
+      stroke="#FFFDF8"
       strokeWidth="2.2"
       strokeLinecap="round"
     />
@@ -121,15 +123,16 @@ const Dashboard = () => {
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <section className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-        <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_12px_40px_rgba(15,23,42,0.05)]">
+        <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_12px_40px_rgba(91,68,24,0.08)]">
           <div className="grid gap-0 lg:grid-cols-[1.3fr_0.7fr]">
             <div className="p-5 sm:p-8 lg:p-10">
               <div className="mb-6 flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50">
-                  <StudentStayMark className="h-8 w-8" />
+                  <StudentStayMark className="hidden h-8 w-8 md:block" />
+                  <CompactBrandMark className="h-8 w-8 text-blue-600 md:hidden" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">
+                  <p className="hidden text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 md:block">
                     StudentStay
                   </p>
                 </div>
@@ -272,7 +275,7 @@ const Dashboard = () => {
 
         {!loading && !error && filteredProperties.length > 0 && (
           <>
-            <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
               {featuredProperties.map((property) => {
                 const imageUrl = getImageUrl(property.images);
                 const location = [
@@ -285,7 +288,7 @@ const Dashboard = () => {
                 return (
                   <article
                     key={property._id}
-                    className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                    className="group min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
                   >
                     <div className="relative h-52 overflow-hidden bg-slate-100">
                       {imageUrl ? (
@@ -305,8 +308,8 @@ const Dashboard = () => {
                       </span>
                     </div>
 
-                    <div className="p-5">
-                      <h3 className="text-xl font-semibold text-slate-900">
+                    <div className="min-w-0 p-4 sm:p-5">
+                      <h3 className="break-words text-lg font-semibold text-slate-900 sm:text-xl">
                         {property.name || "Student stay"}
                       </h3>
 
@@ -317,7 +320,7 @@ const Dashboard = () => {
                         </p>
                       )}
 
-                      <p className="mt-3 text-sm leading-6 text-slate-600">
+                      <p className="mt-3 break-words text-sm leading-6 text-slate-600">
                         {property.description ||
                           "Comfortable student accommodation with easy booking and verified stay options."}
                       </p>
@@ -475,6 +478,8 @@ const Dashboard = () => {
           ))}
         </div>
       </section>
+
+      <FeedbackForm />
     </main>
   );
 };

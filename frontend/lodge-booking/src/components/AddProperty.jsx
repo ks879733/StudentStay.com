@@ -201,7 +201,7 @@ const AddProperty = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6 pb-8">
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <div className="mb-5 flex items-center gap-3">
               <div className="rounded-xl bg-blue-50 p-2 text-blue-600">
                 <Building2 className="h-5 w-5" />
@@ -258,7 +258,7 @@ const AddProperty = () => {
             </div>
           </section>
 
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <div className="mb-5 flex items-center gap-3">
               <div className="rounded-xl bg-sky-50 p-2 text-sky-600">
                 <MapPin className="h-5 w-5" />
@@ -352,7 +352,7 @@ const AddProperty = () => {
             </div>
           </section>
 
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <div className="mb-5 flex items-center gap-3">
               <div className="rounded-xl bg-violet-50 p-2 text-violet-600">
                 <Phone className="h-5 w-5" />
@@ -478,13 +478,13 @@ const AddProperty = () => {
                     rules.map((rule, index) => (
                       <div
                         key={`${rule}-${index}`}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700"
+                        className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700"
                       >
-                        <span>{rule}</span>
+                        <span className="min-w-0 break-words">{rule}</span>
                         <button
                           type="button"
                           onClick={() => removeRule(index)}
-                          className="text-slate-400 transition hover:text-red-600"
+                          className="shrink-0 text-slate-400 transition hover:text-red-600"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -506,7 +506,7 @@ const AddProperty = () => {
               </h2>
             </div>
 
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6">
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 sm:p-6">
               <input
                 id="lodge-image"
                 type="file"

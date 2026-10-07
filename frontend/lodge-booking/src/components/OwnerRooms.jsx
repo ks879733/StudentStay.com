@@ -50,6 +50,11 @@ const OwnerRooms = () => {
   const [roomsError, setRoomsError] = useState("");
   const [formError, setFormError] = useState("");
   const [success, setSuccess] = useState("");
+  const [deactivationRoom, setDeactivationRoom] = useState(null);
+  const [deactivationReason, setDeactivationReason] = useState("");
+  const [deactivationError, setDeactivationError] = useState("");
+  const [deactivationPending, setDeactivationPending] = useState({});
+  const [deactivationSubmitting, setDeactivationSubmitting] = useState(false);
 
   const approvedProperties = properties.filter(
     (property) => property.status === "approved",
@@ -184,8 +189,35 @@ const OwnerRooms = () => {
     }
   };
 
+  const submitDeactivationRequest = async (event) => {
+    event.preventDefault();
+    const reason = deactivationReason.trim();
+    if (!deactivationRoom || !reason) {
+      setDeactivationError("Please provide a reason for this request.");
+      return;
+    }
+    setDeactivationSubmitting(true);
+    setDeactivationError("");
+    try {
+      await api.post(
+        `/owner/room/${deactivationRoom._id}/room-deactivation-request`,
+        { reason },
+      );
+      setDeactivationPending((current) => ({ ...current, [deactivationRoom._id]: true }));
+      setSuccess(`Deactivation request submitted for room ${deactivationRoom.roomNumber}.`);
+      setDeactivationRoom(null);
+      setDeactivationReason("");
+    } catch (requestError) {
+      setDeactivationError(
+        requestError.response?.data?.message || "We could not submit this request. Please try again.",
+      );
+    } finally {
+      setDeactivationSubmitting(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-50 text-slate-900">
+    <div className="min-h-screen w-full min-w-0 max-w-full bg-slate-50 text-slate-900">
       <OwnerSidebar />
 
       <main className="w-full min-w-0 max-w-full px-4 pb-8 pt-20 sm:px-6 lg:ml-64 lg:w-auto lg:px-8 lg:py-8">
@@ -648,6 +680,20 @@ const OwnerRooms = () => {
                                 Capacity {room.capacity} · {room.beds}{" "}
                                 {room.beds === 1 ? "bed" : "beds"}
                               </p>
+                              {roomStatus !== "inactive" && (
+                                <button
+                                  type="button"
+                                  disabled={deactivationPending[room._id]}
+                                  onClick={() => {
+                                    setDeactivationRoom(room);
+                                    setDeactivationReason("");
+                                    setDeactivationError("");
+                                  }}
+                                  className="mt-3 inline-flex min-h-9 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {deactivationPending[room._id] ? "Request pending" : "Request deactivation"}
+                                </button>
+                              )}
                             </div>
                           </article>
                         );
@@ -660,6 +706,26 @@ const OwnerRooms = () => {
           ) : null}
         </div>
       </main>
+      {deactivationRoom && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4" role="presentation">
+          <section role="dialog" aria-modal="true" aria-labelledby="deactivation-title" className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-5 shadow-xl sm:p-6">
+            <h2 id="deactivation-title" className="text-lg font-semibold text-slate-900">Request room deactivation</h2>
+            <p className="mt-1 text-sm text-slate-600">Room {deactivationRoom.roomNumber} at {selectedProperty?.name}</p>
+            {deactivationError && <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{deactivationError}</p>}
+            <form onSubmit={submitDeactivationRequest} className="mt-4 space-y-4">
+              <div>
+                <label htmlFor="deactivation-reason" className="mb-2 block text-sm font-medium text-slate-700">Reason</label>
+                <textarea id="deactivation-reason" value={deactivationReason} onChange={(event) => setDeactivationReason(event.target.value)} required maxLength={500} rows={4} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500" placeholder="Tell the admin why this room should be deactivated." />
+                <p className="mt-1 text-right text-xs text-slate-500">{deactivationReason.length}/500</p>
+              </div>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button type="button" onClick={() => setDeactivationRoom(null)} className="min-h-10 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
+                <button type="submit" disabled={deactivationSubmitting || !deactivationReason.trim()} className="min-h-10 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{deactivationSubmitting ? "Submitting..." : "Submit request"}</button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
     </div>
   );
 };

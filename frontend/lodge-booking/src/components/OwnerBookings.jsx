@@ -107,7 +107,7 @@ const OwnerBookings = () => {
                       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
                         Booking #{String(booking._id).slice(-6)}
                       </p>
-                      <h2 className="mt-2 text-xl font-semibold text-slate-900">
+                      <h2 className="mt-2 break-words text-xl font-semibold text-slate-900">
                         {lodge.name || "Lodge"}
                       </h2>
                     </div>
@@ -124,7 +124,9 @@ const OwnerBookings = () => {
                           className="mt-0.5 h-4 w-4 shrink-0 text-blue-600"
                           aria-hidden="true"
                         />
-                        <span>{locationText || "Location not available"}</span>
+                        <span className="min-w-0 break-words">
+                          {locationText || "Location not available"}
+                        </span>
                       </div>
 
                       <div className="grid gap-4 sm:grid-cols-2">

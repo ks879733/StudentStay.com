@@ -8,11 +8,13 @@ import {
   LogOut,
   Menu,
   Plus,
+  Settings2,
   UserRound,
   X,
 } from "lucide-react";
 import api from "../api/api";
 import { clearAuth } from "../auth";
+import StudentStayMark from "./StudentStayMark";
 
 const OwnerSideBar = ({ pageFlow = false }) => {
   const navigate = useNavigate();
@@ -42,6 +44,7 @@ const OwnerSideBar = ({ pageFlow = false }) => {
     { to: "/owner/dashboard", label: "Dashboard", Icon: LayoutDashboard },
     { to: "/owner/properties", label: "Properties", Icon: Building2 },
     { to: "/owner/rooms", label: "Rooms", Icon: BedDouble },
+    { to: "/owner/room-management", label: "RoomManagement", Icon: Settings2 },
     { to: "/owner/bookings", label: "Bookings", Icon: CalendarDays },
     { to: "/owner/add-property", label: "Add Lodge", Icon: Plus },
     { to: "/owner/profile", label: "Profile", Icon: UserRound },
@@ -52,7 +55,10 @@ const OwnerSideBar = ({ pageFlow = false }) => {
       <div className="fixed left-0 right-0 top-0 z-50 flex h-16 items-center justify-between border-b border-slate-200 bg-white/90 px-4 shadow-sm backdrop-blur-sm lg:hidden">
         <div>
           <h1 className="text-lg font-bold text-slate-900">
-            Student<span className="text-blue-600">Stay</span>
+            <span className="hidden lg:inline">
+              Student<span className="text-blue-600">Stay</span>
+            </span>
+            <StudentStayMark className="h-7 w-7 text-blue-600 lg:hidden" />
           </h1>
           <p className="text-[10px] text-slate-500">Owner Panel</p>
         </div>
@@ -89,7 +95,10 @@ const OwnerSideBar = ({ pageFlow = false }) => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold text-slate-900">
-                Student<span className="text-blue-600">Stay</span>
+                <span className="hidden lg:inline">
+                  Student<span className="text-blue-600">Stay</span>
+                </span>
+                <StudentStayMark className="h-7 w-7 text-blue-600 lg:hidden" />
               </h1>
               <p className="mt-1 text-xs text-slate-500">Owner Panel</p>
             </div>

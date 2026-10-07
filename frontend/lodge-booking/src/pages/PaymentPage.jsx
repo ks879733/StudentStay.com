@@ -111,7 +111,7 @@ const PaymentPage = () => {
           );
         },
       },
-      theme: { color: "#2563eb" },
+      theme: { color: "#D4AF37" },
     });
 
     checkout.open();

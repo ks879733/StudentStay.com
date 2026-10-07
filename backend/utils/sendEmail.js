@@ -14,7 +14,7 @@ const sendOTPEmail = async (email, otp) => {
     from: `"Lodge Booking" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: "Your Login OTP",
-    text: `Your login OTP is ${otp}. It will expire in 5 minutes.`,
+    text: `Your login OTP is ${otp}. It will expire in 2 minutes.`,
   })
 }
 

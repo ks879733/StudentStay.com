@@ -95,7 +95,7 @@ const OwnerProfile = () => {
                     {initials}
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-slate-900">
+                    <h2 className="break-words text-xl font-semibold text-slate-900">
                       {user.name || "Owner"}
                     </h2>
                     <p className="mt-1 text-sm text-slate-600">

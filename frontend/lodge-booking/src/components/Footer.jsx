@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { BriefcaseBusiness, Building2, Camera, Globe } from "lucide-react";
 import api from "../api/api";
 import { clearAuth, getRole } from "../auth";
+import StudentStayMark from "./StudentStayMark";
 
 const STUDENT_SECTIONS = [
   {
@@ -49,6 +50,7 @@ const OWNER_SECTIONS = [
       { label: "My Properties", to: "/owner/properties" },
       { label: "Add Property", to: "/owner/add-property" },
       { label: "My Rooms", to: "/owner/rooms" },
+      { label: "RoomManagement", to: "/owner/room-management" },
       { label: "Bookings", to: "/owner/bookings" },
       { label: "Owner Profile", to: "/owner/profile" },
     ],
@@ -134,17 +136,23 @@ const Footer = ({ pathname }) => {
     }
   };
 
+  const ownerSidebarOffset =
+    role === "owner" && pathname !== "/owner/dashboard" ? "lg:ml-64" : "";
+
   return (
-    <footer className="mt-auto border-t border-slate-200 bg-slate-50 text-slate-700">
+    <footer
+      className={`mt-auto border-t border-slate-200 bg-slate-50 text-slate-700 ${ownerSidebarOffset}`}
+    >
       <div
         className={`mx-auto grid max-w-7xl grid-cols-2 gap-x-6 gap-y-9 px-4 py-10 sm:px-6 md:grid-cols-3 md:gap-x-8 md:py-12 ${desktopColumns} lg:px-8`}
       >
         <div className="col-span-2 min-w-0 md:col-span-3 lg:col-span-1">
           <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
-              <Building2 className="h-4 w-4" aria-hidden="true" />
+              <Building2 className="hidden h-4 w-4 md:block" aria-hidden="true" />
+              <StudentStayMark className="h-7 w-7 md:hidden" />
             </span>
-            <span className="text-lg font-bold text-slate-900">
+            <span className="hidden text-lg font-bold text-slate-900 md:inline">
               StudentStay
             </span>
           </div>
@@ -209,14 +217,14 @@ const Footer = ({ pathname }) => {
                     ) : link.to ? (
                       <Link
                         to={link.to}
-                        className="text-sm leading-5 text-slate-600 transition-colors hover:text-blue-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                        className="break-words text-sm leading-5 text-slate-600 transition-colors hover:text-blue-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                       >
                         {link.label}
                       </Link>
                     ) : (
                       <a
                         href={`mailto:?subject=${encodeURIComponent(link.subject)}`}
-                        className="text-sm leading-5 text-slate-600 transition-colors hover:text-blue-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                        className="break-words text-sm leading-5 text-slate-600 transition-colors hover:text-blue-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                       >
                         {link.label}
                       </a>

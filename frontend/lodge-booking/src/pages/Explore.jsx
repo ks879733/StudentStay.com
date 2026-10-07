@@ -156,7 +156,7 @@ const Explore = () => {
         {!loading && !error && filteredProperties.length > 0 && (
           <>
             <section
-              className="grid min-w-0 grid-cols-2 gap-4 sm:gap-5 xl:grid-cols-3"
+              className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3"
               aria-label="Approved student accommodation"
             >
               {filteredProperties.map((property) => {
@@ -195,8 +195,8 @@ const Explore = () => {
                       </span>
                     </div>
 
-                    <div className="min-w-0 p-5">
-                      <h2 className="text-xl font-semibold text-slate-900">
+                    <div className="min-w-0 p-4 sm:p-5">
+                      <h2 className="break-words text-lg font-semibold text-slate-900 sm:text-xl">
                         {property.name || "Student stay"}
                       </h2>
 
@@ -211,7 +211,7 @@ const Explore = () => {
                       )}
 
                       {property.description && (
-                        <p className="mt-3 text-sm leading-6 text-slate-600">
+                        <p className="mt-3 break-words text-sm leading-6 text-slate-600">
                           {property.description}
                         </p>
                       )}

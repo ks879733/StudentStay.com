@@ -2,10 +2,15 @@ const authMidlleware = require("../middleware/auth");
 const express = require("express");
 const ownerMiddleware = require("../middleware/lodgeOwner");
 const lodge = require("../models/lodge");
+const User = require("../models/User");
 const propertyUpload = require("../middleware/propertyUpload.");
 const cloudinary = require("../config/cloudinory");
 const Room = require("../models/Room");
-const Booking = require("../models/Booking")
+const Booking = require("../models/Booking");
+const { createNotification } = require("../services/notification");
+
+const DeactivateRequest = require("../models/deactivateRequest");
+const RoomDeactivateRequest = require("../models/roomDeactivationRequest");
 const router = express.Router();
 
 const parseJsonField = (value, fieldName, fallback) => {
@@ -118,7 +123,34 @@ router.post("/property-owner", authMidlleware, ownerMiddleware, propertyUpload.a
       rules: rules || [],
       status: "pending",
     });
-     await newLodge.save();
+    await newLodge.save();
+
+    try {
+      const admins = await User.find({ role: "admin" }).select("_id");
+      const notifications = [
+        createNotification({
+          userId: req.user.userId,
+          type: "LODGE_SUBMITTED",
+          title: "Lodge submitted",
+          message: `Your lodge "${newLodge.name}" was submitted for review.`,
+          data: { lodgeId: newLodge._id },
+        }),
+        ...admins.map((admin) => createNotification({
+          userId: admin._id,
+          type: "LODGE_PENDING_ADMIN",
+          title: "New lodge awaiting review",
+          message: `A new lodge "${newLodge.name}" was submitted for approval.`,
+          data: { lodgeId: newLodge._id },
+        })),
+      ];
+      const results = await Promise.allSettled(notifications);
+      results.filter((result) => result.status === "rejected").forEach((result) => {
+        console.error("Lodge notification could not be created:", result.reason);
+      });
+    } catch (notificationError) {
+      console.error("Lodge notifications could not be created:", notificationError);
+    }
+
     res.status(201).json({
       success: true,
       message: "Propertie created successfully",
@@ -652,5 +684,69 @@ router.get("/bookings", authMidlleware, ownerMiddleware, async (req, res) => {
 
 // Avi Delete room API baaki hai
 // Edit Room details API
+
+router.post("/room/:roomId/room-deactivation-request", authMidlleware, ownerMiddleware, async (req, res) => {
+
+  try {
+    const { roomId } = req.params
+  const ownerId = req.user.userId
+  const {reason} = req.body
+  if(!reason) {
+    return res.status(400).json({
+      success: false,
+      message: "Please give reason"
+    })
+  }
+  const room = await Room.findById(roomId);
+  if(!room) {
+    return res.status(404).json({
+      success: false,
+      message: "Room not found"
+    })
+  }
+  const Lodge = await lodge.findOne({_id: room.lodge, owner: ownerId});
+  if(!Lodge) {
+    return res.status(404).json({
+      success: false,
+      message: "lodge not found"
+    })
+  }
+  if(room.status === "inactive"){
+    return res.status(400).json({
+      success: false,
+      message: "Room is alredy inactive"
+    })
+  }
+  const existingRequest = await RoomDeactivateRequest.findOne({room: roomId, status: "pending"})
+  if(existingRequest){
+    return res.status(400).json({
+      success: false,
+      message: "Already Deactivation request sent to Admin wait for approval"
+    })
+  }
+  const newRequest = new RoomDeactivateRequest({
+    room: roomId,
+    lodge: Lodge._id,
+    owner: ownerId,
+    reason
+  });
+
+  await newRequest.save()
+  return res.status(201).json({
+    success: true,
+    message: "Room deactivation request sent to admin",
+    request: newRequest
+  });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
+  }
+});
+
+
 
 module.exports = router;

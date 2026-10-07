@@ -3,7 +3,8 @@ const User = require("../models/User");
 const router = express.Router()
 const jwt = require("jsonwebtoken");
 const Joi = require("joi");
-const bcrypt = require("bcryptjs")
+const bcrypt = require("bcryptjs");
+const crypto = require("crypto")
 const lodge = require("../models/lodge");
 const Room = require("../models/Room");
 const authMidlleware = require("../middleware/auth");
@@ -365,7 +366,35 @@ router.post("/login",loginLimiter, async (req, res) => {
 
 router.post("/logout", async (req, res) => {
   try {
-    const refreshToken = req.cookies?.refreshToken;
+    const authHeader = req.headers.authorization;
+    if(!authHeader) {
+      return res.status(500).json({
+        success: false,
+        message: "Authorization token required"
+      })
+    }
+    if(authHeader || authHeader.startsWith("Bearer ")) {
+      const accessToken = authHeader.split(" ")[1]
+      
+      try {
+        const decode = jwt.verify(accessToken, process.env.JWT_ACCESS_TOKEN);
+        const currentTime = Math.floor(Date.now() / 1000)
+        const remainingTime = decode.exp - currentTime;
+
+        if(remainingTime > 0) {
+          const tokenHash = crypto.createHash("sha256").update(accessToken).digest("hex")
+
+          await redisClient.set(`BlackListAccessToken:${tokenHash}`, "1",
+            {
+              EX: remainingTime,
+            }
+          );
+        }
+      } catch (error) {
+        console.log("Access token verification failed:",error.message)
+      }
+    }
+     const refreshToken = req.cookies?.refreshToken;
 
     if (refreshToken) {
       try {
@@ -393,13 +422,17 @@ router.post("/logout", async (req, res) => {
       message: "Logged out successfully",
     });
   } catch (error) {
-    console.error("Logout Error:", error);
+     console.error("Logout Error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Logout failed",
     });
   }
 });
+  
+   
+  
 
 router.get("/userdetail", authMidlleware, async (req, res) => {
   try {
@@ -416,7 +449,12 @@ router.get("/userdetail", authMidlleware, async (req, res) => {
 
     res.status(200).json({
       success: true,
-      user
+      user: {
+        user: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
     });
 
   } catch (error) {
@@ -458,7 +496,10 @@ router.get("/all-properties", async (req, res) => {
       properties
     })
   } catch (error) {
-    
+    res.status(500).json({
+      success: false,
+      message: "Failed to get lodge "
+    });
   }
 });
 

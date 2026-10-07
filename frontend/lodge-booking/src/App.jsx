@@ -21,11 +21,14 @@ import Footer from "./components/Footer";
 import OwnerDashboard from "./pages/OwnerDashboard";
 import OwnerProperties from "./components/OwnerProperty";
 import OwnerRooms from "./components/OwnerRooms";
+import RoomManagement from "./pages/RoomManagement";
 import OwnerBookings from "./components/OwnerBookings";
 import AddProperty from "./components/AddProperty";
 import OwnerProfile from "./components/OwnerProfile";
 
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminFeedback from "./pages/AdminFeedback";
+import AdminPendingRequests from "./pages/AdminPendingRequests";
 import { ProtectedRoute, RoleRedirect } from "./components/AuthRoute";
 import { getDashboardPath } from "./auth";
 
@@ -73,6 +76,24 @@ const App = () => {
           element={
             <ProtectedRoute role="admin">
               <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/pending-requests"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminPendingRequests />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/feedback"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminFeedback />
             </ProtectedRoute>
           }
         />
@@ -192,6 +213,15 @@ const App = () => {
           element={
             <ProtectedRoute role="owner">
               <OwnerRooms />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/owner/room-management"
+          element={
+            <ProtectedRoute role="owner">
+              <RoomManagement />
             </ProtectedRoute>
           }
         />

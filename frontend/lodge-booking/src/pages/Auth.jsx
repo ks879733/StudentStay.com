@@ -7,6 +7,7 @@ import {
   Users,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import StudentStayMark from "../components/StudentStayMark";
 
 const features = [
   {
@@ -30,15 +31,18 @@ const features = [
 
 const Auth = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-100">
       <div className="mx-auto flex max-w-7xl flex-col gap-10 px-4 py-10 sm:px-6 lg:px-8">
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm">
-              <Building2 className="h-5 w-5" />
+              <Building2 className="hidden h-5 w-5 md:block" />
+              <StudentStayMark className="h-8 w-8 text-white md:hidden" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-blue-600">StudentStay</p>
+              <p className="hidden text-2xl font-bold text-blue-600 md:block">
+                StudentStay
+              </p>
             </div>
           </div>
 
@@ -66,10 +70,10 @@ const Auth = () => {
             </div>
 
             <div className="space-y-4">
-              <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+              <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
                 Find a stay that actually feels like home.
               </h1>
-              <p className="max-w-xl text-lg text-slate-600">
+              <p className="max-w-xl text-base text-slate-600 sm:text-lg">
                 StudentStay helps students discover verified rooms, shared
                 lodges, and hostels that match their budget, location, and
                 comfort needs.
@@ -110,7 +114,7 @@ const Auth = () => {
             </div>
           </section>
 
-          <aside className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-xl shadow-sky-100/70">
+          <aside className="min-w-0 rounded-[28px] border border-slate-200 bg-white p-4 shadow-xl shadow-sky-100/70 sm:p-6">
             <div className="rounded-2xl bg-slate-50 p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                 Why students choose us
@@ -124,7 +128,7 @@ const Auth = () => {
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
                       <Icon className="h-4 w-4" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <h2 className="text-sm font-semibold text-slate-900">
                         {title}
                       </h2>

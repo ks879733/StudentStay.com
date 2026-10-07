@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose")
+
 
 const authMiddleware = require("../middleware/auth")
 const razorpay = require("../config/razorpay");
@@ -12,37 +14,142 @@ const ownerMiddleware = require("../middleware/lodgeOwner");
 const DeactivateRequest = require("../models/deactivateRequest");
 const lodge = require("../models/lodge");
 
-router.post("/booking/:roomId", authMiddleware, async (req, res) => {
-  try {
-    const roomId = req.params.roomId
-    const { occupants, specialRequests } = req.body
+// router.post("/booking/:roomId", authMiddleware, async (req, res) => {
+//   try {
+//     const roomId = req.params.roomId
+//     const { occupants, specialRequests } = req.body
 
-    if(!occupants) {
+//     if(!occupants) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Occupants are required"
+//       })
+//     }
+//     const room = await Room.findById(roomId).populate("lodge", "status");
+//     if(!room) {
+//       return res.status(404).json({
+//         message: "Room not found"
+//       })
+//     }
+//     if(room.status !== "active") {
+//       return res.status(400).json({
+//         message: "Room is not availiable"
+//       })
+//     }
+
+//     if(room.lodge.status !== "approved") {
+//       return res.status(400).json({
+//         message: "Lodge is not approved"
+//       })
+//     }
+//     if(occupants > room.capacity) {
+//       return res.status(400).json({
+//         message: `Maximum ${room.capacity} capacity allowed`
+//       })
+//     }
+//     const existingBooking = await Booking.findOne({
+//       user: req.user.userId,
+//       room: roomId,
+//       $or: [
+//         {
+//           bookingStatus: "confirmed"
+//         },
+//         {
+//           bookingStatus: "pending",
+//           expiresAt: { $gt: new Date() }
+//         }
+//       ]
+//     });
+
+//     if(existingBooking) {
+//       return res.status(400).json({
+//          message: "You already have a booking for this room"
+//       })
+//     }
+//     const bookings = await Booking.find({
+//       room: roomId,
+//        $or: [
+//       {
+//        bookingStatus: "confirmed"
+//       },
+//       {
+//        bookingStatus: "pending",
+//        expiresAt: { $gt: new Date() }
+//       }
+//     ]
+//    });
+//     const occupiedSeats = bookings.reduce((total, booking) => total + booking.occupants, 0);
+
+//     if(occupiedSeats + occupants > room.capacity){
+//        return res.status(400).json({
+//        message: "Not enough space available"
+//     });
+//       }
+//     const newBooking = new Booking({
+//       user: req.user.userId,
+//       lodge: room.lodge._id,
+//       room: room._id,
+//       occupants,
+//       rentPerMonth: room.rentPerMonth,
+//       totalAmount: room.rentPerMonth,
+//       specialRequests: specialRequests || "",
+//       expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10min
+//     })
+//     await newBooking.save();
+//     res.status(201).json({
+//         success: true,
+//         message: "Booking created successfully",
+//         newBooking
+//       });
+//   } catch (error) {
+//      res.status(500).json({
+//         success: false,
+//         message: "Server error",
+//         error: error.message
+//       });
+//   }
+// });
+
+router.post("/booking/:roomId", authMiddleware, async (req, res) => {
+  const session = await mongoose.startSession();
+  try {
+    const { roomId } = req.params;
+    const { occupants, specialRequests } = req.body;
+
+    if(!occupants || occupants < 1) {
       return res.status(400).json({
         success: false,
-        message: "Occupants are required"
+        message: "Valid occupants are required"
       })
     }
-    const room = await Room.findById(roomId).populate("lodge", "status");
+    session.startTransaction();
+    const room = await Room.findById(roomId).populate("lodge", "status").session(session);
     if(!room) {
+      await session.abortTransaction();
       return res.status(404).json({
+        success: false,
         message: "Room not found"
       })
     }
     if(room.status !== "active") {
+      await session.abortTransaction();
       return res.status(400).json({
-        message: "Room is not availiable"
+        success: false,
+        message: "Room is not active"
       })
     }
-
     if(room.lodge.status !== "approved") {
+      await session.abortTransaction();
       return res.status(400).json({
+        success: false,
         message: "Lodge is not approved"
-      })
+    });
     }
     if(occupants > room.capacity) {
+      await session.abortTransaction();
       return res.status(400).json({
-        message: `Maximum ${room.capacity} capacity allowed`
+        success: false,
+        message: `Maximum ${room.capacity} capacity are allowed`
       })
     }
     const existingBooking = await Booking.findOne({
@@ -57,32 +164,26 @@ router.post("/booking/:roomId", authMiddleware, async (req, res) => {
           expiresAt: { $gt: new Date() }
         }
       ]
-    });
+    }).session(session)
 
     if(existingBooking) {
+      await session.abortTransaction();
       return res.status(400).json({
-         message: "You already have a booking for this room"
+        success: false,
+        message: "Already booking exist"
+      });
+    }
+    if(room.occupiedSeats + occupants > room.capacity) {
+      await session.abortTransaction();
+      return res.status(400).json({
+        success: false,
+        message: "All beds are occupied!!"
       })
     }
-    const bookings = await Booking.find({
-      room: roomId,
-       $or: [
-      {
-       bookingStatus: "confirmed"
-      },
-      {
-       bookingStatus: "pending",
-       expiresAt: { $gt: new Date() }
-      }
-    ]
-   });
-    const occupiedSeats = bookings.reduce((total, booking) => total + booking.occupants, 0);
+    room.occupiedSeats += occupants;
 
-    if(occupiedSeats + occupants > room.capacity){
-       return res.status(400).json({
-       message: "Not enough space available"
-    });
-      }
+    await room.save({ session });
+
     const newBooking = new Booking({
       user: req.user.userId,
       lodge: room.lodge._id,
@@ -91,22 +192,30 @@ router.post("/booking/:roomId", authMiddleware, async (req, res) => {
       rentPerMonth: room.rentPerMonth,
       totalAmount: room.rentPerMonth,
       specialRequests: specialRequests || "",
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10min
-    })
-    await newBooking.save();
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+    });
+    await newBooking.save({ session });
+
+    await session.commitTransaction();
     res.status(201).json({
-        success: true,
-        message: "Booking created successfully",
-        newBooking
-      });
+      success: true,
+      message: "Booking created successfully",
+      newBooking
+    })
   } catch (error) {
-     res.status(500).json({
-        success: false,
-        message: "Server error",
-        error: error.message
-      });
+    await session.abortTransaction();
+
+    console.error("Booking Transaction Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Booking creation failed",
+      error: error.message
+    });
+  }finally{
+    await session.endSession()
   }
-});
+})
 
 router.post("/booking/:bookingId/payment", authMiddleware, orderCreationRateLimit, async (req, res) => {
   try {
@@ -187,7 +296,18 @@ router.post("/booking/:bookingId/verify-payment", authMiddleware, async (req, re
       message: "Booking not found"
     })
   }
-
+  if(booking.bookingStatus !== "pending") {
+    return res.status(400).json({
+      success: false,
+      message: "Booking is not pending"
+    })
+  }
+  if(booking.expiresAt && booking.expiresAt <= new Date()) {
+    return res.status(400).json({
+      success: false,
+      message: "Booking expired"
+    })
+  }
   if(booking.razorpayOrderId !== razorpay_order_id) {
     return res.status(400).json({
       success: false,
@@ -290,6 +410,6 @@ router.post("/request-deactivate/:lodgeId", authMidlleware, ownerMiddleware, asy
       });
   }
   
-})
+});
 
 module.exports = router

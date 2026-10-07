@@ -22,4 +22,5 @@ export const clearAuth = () => {
   localStorage.removeItem("accessToken");
   localStorage.removeItem("role");
   localStorage.removeItem("user");
+  window.dispatchEvent(new Event("auth-changed"));
 };

@@ -3,6 +3,8 @@ import { Menu, X } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import api from "../api/api";
 import { clearAuth } from "../auth";
+import StudentStayMark from "./StudentStayMark";
+import NotificationBell from "./NotificationBell";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -35,14 +37,18 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 shadow-sm backdrop-blur-sm rounded-b-xl">
+    <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 shadow-sm backdrop-blur-sm rounded-b-xl min-h-20">
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-3">
           <NavLink
             to="/dashboard"
+            aria-label="StudentStay"
             className="shrink-0 text-xl font-black tracking-tight text-blue-600"
           >
-            StudentStay
+            <span className="hidden md:inline">
+              <span className="text-black">Student</span><span className="text-blue-500">Stay</span>
+            </span>
+            <StudentStayMark className="h-8 w-8 text-blue-600 md:hidden" />
           </NavLink>
 
           <div className="hidden items-center gap-2 md:flex md:gap-5">
@@ -78,11 +84,13 @@ const Navbar = () => {
             )}
           </div>
 
+          {token && <NotificationBell className="ml-auto md:ml-0" />}
+
           <button
             type="button"
             aria-label="Toggle navigation menu"
             onClick={() => setMenuOpen((open) => !open)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 md:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 md:hidden cursor-pointer"
           >
             {menuOpen ? (
               <X className="h-5 w-5" />

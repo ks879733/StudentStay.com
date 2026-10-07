@@ -58,6 +58,11 @@ const roomSchema = new mongoose.Schema({
     enum: ["active", "inactive", "maintenance"],
     default: "active",
   },
+  occupiedSeats: {
+  type: Number,
+  default: 0,
+  min: 0
+}
 }, { timestamps: true });
 
 // A room number only needs to be unique within its lodge.
